@@ -1,0 +1,6 @@
+DB_HOST = <Your Host>
+DB_USER = <Your DB User>
+DB_PASSWORD = <Your DB Password>
+DB_NAME = <Your DB Name>
+DB_PORT = 5432
+SECRET_KEY=<Your Secret Key>
