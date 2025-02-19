@@ -18,6 +18,13 @@ func GetEventByID(c *gin.Context) {
 	var event models.Event
 	id := c.Param("id")
 
+	// Validasi id
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Event ID is required"})
+		return
+	}
+
+	// Cari event berdasarkan id
 	if err := config.DB.First(&event, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
 		return

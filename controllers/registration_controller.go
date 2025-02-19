@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/alawii17/goEvent_be/config"
 	"github.com/alawii17/goEvent_be/models"
@@ -9,22 +10,55 @@ import (
 )
 
 func RegisterForEvent(c *gin.Context) {
-	userID,_ := c.Get("user_id")
-	eventID := c.Param("event_id")
-
-	registration := models.Registration{
-		UserID: userID.(uint),
-		EventID: uint(eventID[0] - '0'),
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
 	}
 
-	config.DB.Create(&registration)
+	eventIDParam := c.Param("event_id")
+	eventID, err := strconv.ParseUint(eventIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
+		return
+	}
+
+	var event models.Event
+	if err := config.DB.First(&event, eventID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
+		return
+	}
+
+	var existingRegistration models.Registration
+	if err := config.DB.Where("user_id = ? AND event_id = ?", userID, eventID).First(&existingRegistration).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "User already registered for this event"})
+		return
+	}
+
+	registration := models.Registration{
+		UserID:  userID.(uint),
+		EventID: uint(eventID),
+	}
+	if err := config.DB.Create(&registration).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register for event"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Registered for event successfully!"})
 }
 
 func GetUserRegistrations(c *gin.Context) {
-	userID,_ := c.Get("user_id")
-	var registrations []models.Registration
-	config.DB.Where("user_id = ?", userID).Find(&registrations)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
 
-	c.JSON(http.StatusOK, registrations)
+	var registrations []models.Registration
+	if err := config.DB.Where("user_id = ?", userID).Find(&registrations).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve registrations"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"registrations": registrations})
 }

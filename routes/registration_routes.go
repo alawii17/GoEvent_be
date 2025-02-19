@@ -7,9 +7,9 @@ import (
 )
 
 func RegistrationRoutes(r *gin.Engine) {
-	registrationGroup := r.Group("/registrations")
+	registrationGroup := r.Group("/registrations", middleware.AuthMiddleware()) // Middleware diterapkan ke semua route dalam group
 	{
-		registrationGroup.POST("/:event_id", middleware.AuthMiddleware(), controllers.RegisterForEvent)
-		registrationGroup.GET("/", middleware.AuthMiddleware(), controllers.GetUserRegistrations)
+		registrationGroup.POST("/:event_id", controllers.RegisterForEvent) // Mendaftar event
+		registrationGroup.GET("/", controllers.GetUserRegistrations) // Mendapatkan daftar event yang didaftarkan user
 	}
 }

@@ -10,7 +10,7 @@ func EventRoutes(r *gin.Engine) {
 	eventGroup := r.Group("/events")
 	{
 		eventGroup.GET("/", controllers.GetEvents)
-		eventGroup.GET("/id", controllers.GetEventByID)
+		eventGroup.GET("/:id", controllers.GetEventByID)
 		eventGroup.POST("/",  middleware.AuthMiddleware(), controllers.CreateEvent)
 		eventGroup.PUT("/:id", middleware.AuthMiddleware(), controllers.UpdateEvent)
 		eventGroup.DELETE("/:id",  middleware.AuthMiddleware(), controllers.DeleteEvent)
